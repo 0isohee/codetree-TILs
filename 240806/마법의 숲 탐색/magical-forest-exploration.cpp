@@ -46,7 +46,7 @@ bool canMove(int x, int y) {
 
 int moveBlock(int v, int x, int y){
 
-    int maxR = x-2;
+    int maxR = 0;
     queue<pair<int, int>> q;
     vector<vector<bool>> visited(R+3, vector<bool>(C,false));
     q.push({x,y});
