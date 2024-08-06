@@ -10,14 +10,14 @@ int dy [] = {0,1,0,-1};
 vector<vector<int>> map;
 vector<vector<bool>> isExit;
 
-void printMap(){
-    for (int i=3; i<R+3; i++){
-        for (int j=0; j<C; j++){
-            cout << map[i][j] << " ";
-        }
-        cout << "\n";
-    }
-}
+// void printMap(){
+//     for (int i=3; i<R+3; i++){
+//         for (int j=0; j<C; j++){
+//             cout << map[i][j] << " ";
+//         }
+//         cout << "\n";
+//     }
+// }
 void fillBlock(int idx, int x, int y, int dir) {
     map[x][y] = idx;
     for (int d=0; d<4; d++){
@@ -44,14 +44,6 @@ bool canMove(int x, int y) {
     return true;
 }
 
-void printBoolMap(vector<vector<bool>> &map){
-    for (int i=3; i<R+3; i++){
-        for (int j=0; j<C; j++){
-            cout << map[i][j] << " ";
-        }
-        cout << "\n";
-    }
-}
 int moveBlock(int v, int x, int y){
 
     int maxR = x-2;
@@ -68,18 +60,14 @@ int moveBlock(int v, int x, int y){
             int nx = now.first + dx[d];
             int ny = now.second + dy[d];
 
-            //안들어가본 블럭 내부일 때
-            if (canMove(nx, ny) && !visited[nx][ny]) {
-                //내 블럭 안이거나 출구일때
-                if ((map[nx][ny] == map[now.first][now.second]) || (map[nx][ny] != 0 && isExit[now.first][now.second])) {
-                    visited[nx][ny] = true;
-                    q.push({nx, ny});
-                    maxR = max(maxR, nx-2);
-                }
+            //현재 정령 블럭이거나, 출입구면
+            if (canMove(nx, ny) && !visited[nx][ny] && ((map[nx][ny] == map[now.first][now.second]) || (map[nx][ny] != 0 && isExit[now.first][now.second]))){
+                visited[nx][ny] = true;
+                q.push({nx, ny});
+                maxR = max(maxR, nx-2);
             }
         }
     }
-    // printBoolMap(visited);
     return maxR;
 }
 
@@ -116,13 +104,13 @@ int main(){
                 r++;
             }
             //서쪽 회전 
-            else if (isRange(r+1,c-1)) {
+            else if (isRange(r,c-1) && isRange(r+1,c-1)) {
                 c -= 1;
                 r += 1;
                 d = (d+3) % 4;
             }
             //동쪽 회전 
-            else if (isRange(r+1,c+1)) {
+            else if (isRange(r,c+1) && isRange(r+1,c+1)) {
                 c += 1;
                 r += 1;
                 d = (d+1) % 4;
@@ -132,17 +120,11 @@ int main(){
                 break;
             }
         }
-
         if (r <= 2) {
             clearMap();
         } else {
             fillBlock(i+1,r,c,d);
         }
-        // printBoolMap(isExit);
-        // cout << "------\n";
-        // printMap();
-        // cout << "\n";
-
         ans += moveBlock(i+1, r,c);
     }
     cout << ans <<  "\n";
