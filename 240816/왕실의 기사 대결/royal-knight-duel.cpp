@@ -162,7 +162,7 @@ int getDamage() {
     int ans = 0;
     for (int i = 0; i < N; i++) {
         if (!peopleList[i].isdead){
-            ans += (peopleList[i].ok - peopleList[i].k);
+            ans += abs(peopleList[i].ok - peopleList[i].k);
         }
     }
     return ans;
