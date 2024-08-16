@@ -42,10 +42,14 @@ void printMap() {
     }
 }
 
+bool isRange(int x, int y) {
+    return x >=0 && x < L && y >= 0 && y < L;
+}
+
 void init() {
 
     map.resize(L, vector<int>(L,0));
-    visited.resize(L, vector<pair<int,int>>(L));
+    visited.resize(40, vector<pair<int,int>>(40, {0,0}));
     peopleList.resize(N);
     orders.resize(Q);
 
@@ -69,13 +73,14 @@ void init() {
     }
 
     //vistied에 현재 상태 표시
-    for (int i=0; i<Q; i++) {
+    for (int i=0; i<N; i++) {
         Person p = peopleList[i];
 
         int sx = p.r - 1;
         int sy = p.c - 1;
         for (int x=sx; x<sx+p.h; x++){
             for (int y=sy; y<sy+p.w; y++) {
+                if (!isRange(x, y)) continue;
                 visited[x][y].first = p.num;
                 visited[x][y].second = p.k;
             }
@@ -84,7 +89,7 @@ void init() {
 }
 
 int checkIdx(int n){
-    for (int i=0; i<Q; i++) {
+    for (int i=0; i<peopleList.size(); i++) {
         if (!peopleList[i].isdead &&peopleList[i].num == n) {
             return i;
         }
@@ -99,6 +104,7 @@ void movePerson(int orin, int idx, Person p, int d) {
     int sy = p.c - 1;
     for (int x=sx; x<sx+p.h; x++){
         for (int y=sy; y<sy+p.w; y++) {
+            if(!isRange(x,y)) continue;
             visited[x][y].first = 0;
             visited[x][y].second = 0;
         }
@@ -135,10 +141,6 @@ void movePerson(int orin, int idx, Person p, int d) {
     peopleList[idx] = p;
 }
 
-bool isRange(int x, int y) {
-    return x >=0 && x < L && y >= 0 && y < L;
-}
-
 bool isCanMove(int orin, Person p, int d) {
 
     int nx = p.r + dx[d] - 1;
@@ -147,11 +149,14 @@ bool isCanMove(int orin, Person p, int d) {
     for (int x=nx; x<nx+p.h; x++){
         for (int y=ny; y<ny+p.w; y++) {
             //범위 벗어나거나 벽이면
-            if (!isRange(x,y) || map[x][y] == 2)  {
+            if (!isRange(x,y)){
+                return false;
+            } 
+            else if (map[x][y] == 2)  {
                 return false;
             } 
             //다른 기사 있을 때 다른 기사 연쇄 이동
-            else if (visited[x][y].first > 0 && visited[x][y].first != p.num) {
+            else if (isRange(x,y) && visited[x][y].first > 0 && visited[x][y].first != p.num) {
                 
                 int idx = checkIdx(visited[x][y].first);
                 if (idx == -1) continue;
@@ -183,7 +188,7 @@ void gameStart() {
 
 int getDamage() {
     int ans = 0;
-    for (int i=0; i<Q; i++) {
+    for (int i=0; i<N; i++) {
         if (peopleList[i].isdead) continue;
         ans += (peopleList[i].ok - peopleList[i].k);
     }
