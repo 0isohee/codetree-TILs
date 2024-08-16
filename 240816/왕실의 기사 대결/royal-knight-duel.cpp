@@ -96,7 +96,7 @@ void movePerson(int orin, int idx, Person p, int d) {
     if (orin != idx) {
         for (int x = sx; x < sx + p.h; x++) {
             for (int y = sy; y < sy + p.w; y++) {
-                if (isRange(x, y) && map[x][y] == 1) { // 경계 체크 추가
+                if (map[x][y] == 1) { 
                     p.k -= 1;
                 }
             }
@@ -105,6 +105,7 @@ void movePerson(int orin, int idx, Person p, int d) {
 
     if (p.k <= 0) {
         p.isdead = true;
+        p.k = 0;
     }
 
     // 새로운 위치에 업데이트
