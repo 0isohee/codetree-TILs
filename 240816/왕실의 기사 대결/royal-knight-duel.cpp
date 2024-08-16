@@ -105,9 +105,10 @@ void movePerson(int orin, int idx, Person p, int d) {
 
     if (p.k <= 0) {
         p.isdead = true;
-        p.k = 0;
     }
 
+    peopleList[idx] = p;
+    if (p.isdead) return;
     // 새로운 위치에 업데이트
     for (int x = sx; x < sx + p.h; x++) {
         for (int y = sy; y < sy + p.w; y++) {
@@ -117,8 +118,6 @@ void movePerson(int orin, int idx, Person p, int d) {
             }
         }
     }
-
-    peopleList[idx] = p;
 }
 
 bool isCanMove(int orin, Person p, int d) {
@@ -162,8 +161,9 @@ void gameStart() {
 int getDamage() {
     int ans = 0;
     for (int i = 0; i < N; i++) {
-        if (peopleList[i].isdead) continue;
-        ans += (peopleList[i].ok - peopleList[i].k);
+        if (!peopleList[i].isdead){
+            ans += (peopleList[i].ok - peopleList[i].k);
+        }
     }
     return ans;
 }
