@@ -1,113 +1,187 @@
-#include <iostream>
-#include <queue>
-
+#include<iostream>
+#include<vector>
+#include<utility>
 using namespace std;
 
-#define MAX_N 31
-#define MAX_L 41
+struct Person {
+    int num,r,c,h,w,k,ok;
+    bool isdead;
+};
 
-int l, n, q;
-int info[MAX_L][MAX_L];
-int bef_k[MAX_N];
-int r[MAX_N], c[MAX_N], h[MAX_N], w[MAX_N], k[MAX_N];
-int nr[MAX_N], nc[MAX_N];
-int dmg[MAX_N];
-bool is_moved[MAX_N];
+int L, N, Q;
+int dx [] = {-1,0,1,0};
+int dy [] = {0,1,0,-1};
+vector<vector<int>> map;
+vector<vector<pair<int,int>>> visited;
+vector<Person> peopleList;
+vector<pair<int,int>> orders;
 
-int dx[4] = {-1, 0, 1, 0}, dy[4] = {0, 1, 0, -1};
+bool isRange(int x, int y) {
+    return x >= 0 && x < L && y >= 0 && y < L;
+}
 
-// 움직임을 시도해봅니다.
-bool TryMovement(int idx, int dir) {
-    // 초기화 작업입니다.
-    for(int i = 1; i <= n; i++) {
-        dmg[i] = 0;
-        is_moved[i] = false;
-        nr[i] = r[i];
-        nc[i] = c[i];
+void init() {
+    map.resize(L, vector<int>(L, 0));
+    visited.resize(L, vector<pair<int,int>>(L));
+    peopleList.resize(N);
+    orders.resize(Q);
+
+    for (int i=0; i<L; i++) {
+        for (int j=0; j<L; j++) {
+            cin >> map[i][j];
+        }
+    }
+    for (int i=0; i<N; i++) {
+        Person p;
+        p.num = i + 1;
+        cin >> p.r >> p.c >> p.h >> p.w >> p.k;
+        p.ok = p.k;
+        p.isdead = false;
+        peopleList[i] = p;
+    }
+    for (int i=0; i<Q; i++) {
+        int num, dir;
+        cin >> num >> dir;
+        orders[i] = {num, dir};
     }
 
-    queue<int> q;
+    // 현재 상태를 visited에 표시
+    for (int i=0; i<N; i++) {
+        Person p = peopleList[i];
+        int sx = p.r - 1;
+        int sy = p.c - 1;
+        for (int x = sx; x < sx + p.h; x++) {
+            for (int y = sy; y < sy + p.w; y++) {
+                if (isRange(x, y)) { // 경계 체크 추가
+                    visited[x][y].first = p.num;
+                    visited[x][y].second = p.k;
+                }
+            }
+        }
+    }
+}
 
-    q.push(idx);
-    is_moved[idx] = true;
+int checkIdx(int n) {
+    for (int i = 0; i < peopleList.size(); i++) {
+        if (!peopleList[i].isdead && peopleList[i].num == n) {
+            return i;
+        }
+    }
+    return -1;
+}
 
-    while(!q.empty()) {
-        int x = q.front(); q.pop();
+void movePerson(int orin, int idx, Person p, int d) {
 
-        nr[x] += dx[dir];
-        nc[x] += dy[dir];
+    int sx = p.r - 1;
+    int sy = p.c - 1;
 
-        // 경계를 벗어나는지 체크합니다.
-        if(nr[x] < 1 || nc[x] < 1 || nr[x] + h[x] - 1 > l || nc[x] + w[x] - 1 > l)
-            return false;
+    // 기존 위치 비우기
+    for (int x = sx; x < sx + p.h; x++) {
+        for (int y = sy; y < sy + p.w; y++) {
+            if (isRange(x, y)) { // 경계 체크 추가
+                visited[x][y].first = 0;
+                visited[x][y].second = 0;
+            }
+        }
+    }
 
-        // 대상 조각이 다른 조각이나 장애물과 충돌하는지 검사합니다.
-        for(int i = nr[x]; i <= nr[x] + h[x] - 1; i++) {
-            for(int j = nc[x]; j <= nc[x] + w[x] - 1; j++) {
-                if(info[i][j] == 1) 
-                    dmg[x]++;
-                if(info[i][j] == 2)
-                    return false;
+    // 이동
+    p.r += dx[d];
+    p.c += dy[d];
+    sx = p.r - 1;
+    sy = p.c - 1;
+
+    // 함정 데미지 적용
+    if (orin != idx) {
+        for (int x = sx; x < sx + p.h; x++) {
+            for (int y = sy; y < sy + p.w; y++) {
+                if (map[x][y] == 1) { 
+                    p.k -= 1;
+                }
+            }
+        }
+    }
+
+    if (p.k <= 0) {
+        p.isdead = true;
+    }
+
+    if (!p.isdead) {
+        // 새로운 위치에 업데이트
+        for (int x = sx; x < sx + p.h; x++) {
+            for (int y = sy; y < sy + p.w; y++) {
+                if (isRange(x, y)) { // 경계 체크 추가
+                    visited[x][y].first = p.num;
+                    visited[x][y].second = p.k;
+                }
             }
         }
 
-        // 다른 조각과 충돌하는 경우, 해당 조각도 같이 이동합니다.
-        for(int i = 1; i <= n; i++) {
-            if(is_moved[i] || k[i] <= 0) 
-                continue;
-            if(r[i] > nr[x] + h[x] - 1 || nr[x] > r[i] + h[i] - 1) 
-                continue;
-            if(c[i] > nc[x] + w[x] - 1 || nc[x] > c[i] + w[i] - 1) 
-                continue;
+    }
+    peopleList[idx] = p;
+}
 
-            is_moved[i] = true;
-            q.push(i);
+bool isCanMove(int orin, Person p, int d) {
+    
+    if (p.isdead) return false;
+    int nx = p.r + dx[d] - 1;
+    int ny = p.c + dy[d] - 1;
+
+    for (int x = nx; x < nx + p.h; x++) {
+        for (int y = ny; y < ny + p.w; y++) {
+            // 범위 벗어나거나 벽이면 이동 불가
+            if (!isRange(x, y)) {
+                return false;
+            } else if (map[x][y] == 2) {
+                return false;
+            }
+            // 다른 기사가 있으면 연쇄 이동 처리
+            else if (visited[x][y].first > 0 && visited[x][y].first != p.num) {
+                int idx = checkIdx(visited[x][y].first);
+                if (idx == -1) continue;
+                if (isCanMove(orin, peopleList[idx], d)) {
+                    movePerson(orin, idx, peopleList[idx], d);
+                } else {
+                    return false;
+                }
+            }
         }
     }
-
-    dmg[idx] = 0;
     return true;
 }
 
-// 특정 조각을 지정된 방향으로 이동시키는 함수입니다.
-void MovePiece(int idx, int dir) {
-    if(k[idx] <= 0) 
-        return;
+void gameStart() {
+    for (int i = 0; i < Q; i++) {
+        int num = orders[i].first - 1;
+        int dir = orders[i].second;
 
-    // 이동이 가능한 경우, 실제 위치와 체력을 업데이트합니다.
-    if(TryMovement(idx, dir)) {
-        for(int i = 1; i <= n; i++) {
-            r[i] = nr[i];
-            c[i] = nc[i];
-            k[i] -= dmg[i];
+        if (!peopleList[num].isdead && isCanMove(num, peopleList[num], dir)) {
+            movePerson(num, num, peopleList[num], dir);
         }
     }
 }
 
-int main() {
-    // 입력값을 받습니다.
-    cin >> l >> n >> q;
-    for(int i = 1; i <= l; i++)
-        for(int j = 1; j <= l; j++)
-            cin >> info[i][j];
-    for(int i = 1; i <= n; i++) {
-        cin >> r[i] >> c[i] >> h[i] >> w[i] >> k[i];
-        bef_k[i] = k[i];
-    }
-    for(int i = 1; i <= q; i++) {
-        int idx, dir;
-        cin >> idx >> dir;
-        MovePiece(idx, dir);
-    }
-
-    // 결과를 계산하고 출력합니다.
-    long long ans = 0;
-    for(int i = 1; i <= n; i++) {
-        if(k[i] > 0) {
-            ans += bef_k[i] - k[i];
+int getDamage() {
+    int ans = 0;
+    for (int i = 0; i < N; i++) {
+        if (!peopleList[i].isdead){
+            ans += abs(peopleList[i].ok - peopleList[i].k);
         }
     }
+    return ans;
+}
 
-    cout << ans;
+int main() {
+    cin.tie(NULL);
+    cout.tie(NULL);
+    ios::sync_with_stdio(false);
+
+    cin >> L >> N >> Q;
+
+    init();
+    gameStart();
+
+    int ans = getDamage();
+    cout << ans << "\n";
     return 0;
 }
